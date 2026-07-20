@@ -240,13 +240,42 @@
     }
     button:hover{ filter: brightness(1.05); }
     button:disabled{ opacity: .6; cursor: default; }
-    .meta{
+    .metaRow{
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       margin-top: 13px;
+    }
+    .meta{
       color: rgba(255,255,255,.82);
       font-size: 13px;
       font-weight: 500;
+    }
+    .copyLinkBtn{
+      width: auto;
+      min-height: 0;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.55);
+      color: var(--white);
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .copyLinkBtn:hover{
+      background: rgba(255,255,255,.16);
+      border-color: rgba(255,255,255,.85);
+    }
+    .copyLinkBtn.copied{
+      background: var(--warm-gold);
+      border-color: var(--warm-gold);
+      color: var(--deep-navy);
     }
     #map{
       width: 100%;
@@ -424,6 +453,8 @@
       }
       .topBar{ justify-content: stretch; }
       .backBtn{ width: 100%; justify-content: center; }
+      .metaRow{ flex-direction: column; align-items: stretch; }
+      .copyLinkBtn{ width: 100%; }
       .controls{ grid-template-columns: 1fr; }
       .grid{ grid-template-columns: 1fr; }
       .personTop{ align-items: flex-start; }
@@ -462,7 +493,10 @@
         </select>
         <button id="searchBtn" type="button">Search</button>
       </div>
-      <div id="meta" class="meta">Loading directory...</div>
+      <div class="metaRow">
+        <div id="meta" class="meta">Loading directory...</div>
+        <button id="copyLinkBtn" class="copyLinkBtn" type="button">Copy link to this view</button>
+      </div>
     </section>
     <div id="map"></div>
     <section id="directory" class="grid" aria-label="Coffee morning directory"></section>
@@ -489,9 +523,71 @@
     const radiusEl = document.getElementById("radius");
     const categoryFilterEl = document.getElementById("categoryFilter");
     const searchBtn = document.getElementById("searchBtn");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
 
     let groups = [];
     let searchOrigin = null; // { lat, lng } of the searched postcode, or null
+
+    // ---- Shareable URL support ----
+    // Reads/writes ?postcode=...&radius=...&category=... so a specific filtered
+    // view can be copied and sent as a link. Works when this page is opened
+    // directly (e.g. a hosted URL); a Google Sites Embed loads this in an
+    // iframe, so the browser's own address bar won't reflect it there - the
+    // Copy Link button always builds the link from this page's own URL, which
+    // is what you'd share instead of the Sites page link.
+    function paramsFromControls(){
+      const params = new URLSearchParams();
+      const pc = postcodeEl.value.trim();
+      if (pc) params.set("postcode", pc);
+      if (radiusEl.value) params.set("radius", radiusEl.value);
+      if (categoryFilterEl.value) params.set("category", categoryFilterEl.value);
+      return params;
+    }
+    function updateUrl(){
+      const query = paramsFromControls().toString();
+      const newUrl = `${window.location.pathname}${query ? "?" + query : ""}${window.location.hash}`;
+      window.history.replaceState({}, "", newUrl);
+    }
+    function applyParamsFromUrl(){
+      const params = new URLSearchParams(window.location.search);
+      const pc = params.get("postcode");
+      const radius = params.get("radius");
+      const category = params.get("category");
+      if (pc) postcodeEl.value = pc;
+      if (radius && [...radiusEl.options].some(o => o.value === radius)){
+        radiusEl.value = radius;
+      }
+      if (category && [...categoryFilterEl.options].some(o => o.value === category)){
+        categoryFilterEl.value = category;
+      }
+      return Boolean(pc);
+    }
+    async function copyShareLink(){
+      updateUrl();
+      const link = window.location.href;
+      const showCopied = () => {
+        copyLinkBtn.textContent = "Link copied!";
+        copyLinkBtn.classList.add("copied");
+        setTimeout(() => {
+          copyLinkBtn.textContent = "Copy link to this view";
+          copyLinkBtn.classList.remove("copied");
+        }, 2000);
+      };
+      try{
+        await navigator.clipboard.writeText(link);
+        showCopied();
+      } catch {
+        // Clipboard API can be blocked inside an iframe - fall back to a
+        // temporary text field and the older copy command.
+        const temp = document.createElement("input");
+        temp.value = link;
+        document.body.appendChild(temp);
+        temp.select();
+        try{ document.execCommand("copy"); showCopied(); }
+        catch { window.prompt("Copy this link:", link); }
+        document.body.removeChild(temp);
+      }
+    }
 
     const map = L.map("map", { scrollWheelZoom: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -734,6 +830,7 @@
           searchOrigin = point;
         }
         render();
+        updateUrl();
       } catch (err){
         console.error(err);
         statusEl.hidden = false;
@@ -751,7 +848,16 @@
         const rows = parseCSV(csv);
         groups = makeObjectRows(rows);
         populateFilters(groups);
-        render();
+        // Pre-fill from a shared link (?postcode=...&radius=...&category=...).
+        // Category/radius need the <select> options to exist first, hence this
+        // runs after populateFilters(). If a postcode was in the link, run the
+        // search automatically so the recipient sees the same filtered view.
+        const hasPostcode = applyParamsFromUrl();
+        if (hasPostcode){
+          await runSearch();
+        } else {
+          render();
+        }
       } catch (err){
         console.error(err);
         metaEl.textContent = "Could not load the directory.";
@@ -761,8 +867,9 @@
     }
     searchBtn.addEventListener("click", runSearch);
     postcodeEl.addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
-    radiusEl.addEventListener("change", () => { if (searchOrigin) render(); });
-    categoryFilterEl.addEventListener("change", render);
+    radiusEl.addEventListener("change", () => { render(); updateUrl(); });
+    categoryFilterEl.addEventListener("change", () => { render(); updateUrl(); });
+    copyLinkBtn.addEventListener("click", copyShareLink);
     loadDirectory();
   </script>
 </body>
