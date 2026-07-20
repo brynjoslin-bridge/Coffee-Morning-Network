@@ -1,5 +1,4 @@
-https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXplp2E/edit?usp=sharing
-
+<!-- Source sheet: https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXplp2E/edit?usp=sharing -->
 <!doctype html>
 <html lang="en-GB">
 <head>
@@ -51,16 +50,17 @@ https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXpl
       position: relative;
       isolation: isolate;
       width: 100%;
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 18px;
-      border-radius: 32px;
+      max-width: none;
+      min-height: 100vh;
+      margin: 0;
+      padding: 18px clamp(18px, 3vw, 40px) 40px;
+      border-radius: 0;
       background:
         radial-gradient(circle at 12% 6%, rgba(232, 160, 35, .22) 0 115px, transparent 116px),
         radial-gradient(circle at 95% 4%, rgba(58, 171, 170, .22) 0 165px, transparent 166px),
         linear-gradient(180deg, #FDFBF8 0%, var(--soft-cream) 100%);
-      border: 2px solid rgba(58, 171, 170, .7);
-      box-shadow: var(--shadow);
+      border: none;
+      box-shadow: none;
       overflow: hidden;
     }
     .page::before,
@@ -84,6 +84,33 @@ https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXpl
       left: -36px;
       bottom: 42px;
       border: 2px solid rgba(232, 160, 35, .38);
+    }
+    .topBar{
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .backBtn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      background: var(--white);
+      color: var(--deep-navy);
+      border: 1px solid var(--line-strong);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow-soft);
+      transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .backBtn:hover,
+    .backBtn:focus-visible{
+      background: var(--brand-teal);
+      color: var(--white);
+      border-color: var(--brand-teal);
+      transform: translateY(-1px);
     }
     .hero{
       position: relative;
@@ -239,7 +266,7 @@ https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXpl
     .popupMeta{ margin: 0 0 2px; color: var(--slate); }
     .grid{
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 16px;
       margin-top: 18px;
     }
@@ -389,13 +416,14 @@ https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXpl
     }
     @media (max-width: 560px){
       .page{
-        padding: 12px;
-        border-radius: 24px;
+        padding: 12px 12px 32px;
       }
       .hero{
         padding: 22px 18px;
         border-radius: 22px;
       }
+      .topBar{ justify-content: stretch; }
+      .backBtn{ width: 100%; justify-content: center; }
       .controls{ grid-template-columns: 1fr; }
       .grid{ grid-template-columns: 1fr; }
       .personTop{ align-items: flex-start; }
@@ -406,6 +434,11 @@ https://docs.google.com/spreadsheets/d/1SaA33FZUbDLtIdV2_5clrDggOHYaFYzALbRcVXpl
 </head>
 <body>
   <main class="page">
+    <div class="topBar">
+      <a class="backBtn" href="https://sites.google.com/wearebridge.org/lincolnnorthrural/home" target="_top" rel="noopener">
+        &larr; Back to Partnership Board
+      </a>
+    </div>
     <section class="hero">
       <div class="heroInner">
         <div class="eyebrow">Lincoln North Rural</div>
