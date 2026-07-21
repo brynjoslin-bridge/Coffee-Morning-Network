@@ -85,37 +85,33 @@
       bottom: 42px;
       border: 2px solid rgba(232, 160, 35, .38);
     }
+    /* Desktop: hero + card list in a left column, map filling the rest of
+       the screen on the right. Tablet/phone: single column, in the order
+       hero -> map -> cards, so people see the map before scrolling through
+       every shop. Grid areas make the reorder possible without moving the
+       actual HTML, so tab/reading order stays sensible at every size. */
     .layout{
-      display: flex;
-      align-items: flex-start;
-      gap: 20px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "hero map"
+        "cards map";
+      gap: 16px 20px;
+      height: calc(100vh - 24px);
     }
-    .sidebar{
-      flex: 0 0 420px;
-      width: 420px;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      position: sticky;
-      top: 12px;
-      align-self: flex-start;
-      max-height: calc(100vh - 24px);
-    }
-    .sidebarScroll{
+    .cardsCol{
+      grid-area: cards;
       overflow-y: auto;
       padding-right: 6px;
-      flex: 1 1 auto;
       min-height: 0;
     }
     .mapCol{
-      flex: 1 1 auto;
-      min-width: 0;
-      position: sticky;
-      top: 12px;
-      align-self: flex-start;
-      height: calc(100vh - 24px);
+      grid-area: map;
+      min-height: 0;
     }
     .hero{
+      grid-area: hero;
       position: relative;
       overflow: hidden;
       background: var(--brand-teal);
@@ -123,7 +119,6 @@
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
       padding: clamp(14px, 2vw, 22px) clamp(18px, 3vw, 32px);
-      margin-bottom: 14px;
     }
     .hero::before,
     .hero::after{
@@ -456,18 +451,21 @@
       }
     }
     @media (max-width: 1100px){
-      .sidebar{ flex-basis: 360px; width: 360px; }
+      .layout{ grid-template-columns: 360px 1fr; }
     }
     @media (max-width: 900px){
-      .layout{ flex-direction: column; }
-      .sidebar{
-        position: static;
-        width: 100%;
-        flex-basis: auto;
-        max-height: none;
+      /* Single column from here down: hero, then map, then the card list -
+         so people get their bearings on the map before scrolling through
+         every shop. */
+      .layout{
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: 14px;
       }
-      .sidebarScroll{ overflow-y: visible; padding-right: 0; }
-      .mapCol{ position: static; height: 420px; width: 100%; }
+      .cardsCol{ order: 3; overflow-y: visible; padding-right: 0; }
+      .mapCol{ order: 2; height: 420px; }
+      .hero{ order: 1; }
       .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
       h1{ max-width: 100%; }
     }
@@ -490,37 +488,35 @@
 <body>
   <main class="page">
     <div class="layout">
-      <aside class="sidebar">
-        <section class="hero">
-          <div class="heroInner">
-            <div class="eyebrow">Community Connectors</div>
-            <h1>Find international food <span class="scriptAccent">near you</span></h1>
-            <p class="intro">
-              A directory of international, halal and speciality food shops near the University of Lincoln's
-              Brayford Pool campus. Browse everything below, filter by type, and tap a shop to get directions.
-            </p>
-          </div>
-          <div class="controls">
-            <select id="categoryFilter" aria-label="Filter by type">
-              <option value="">All types</option>
-            </select>
-            <div class="checkField">
-              <input type="checkbox" id="halalOnly" />
-              <label for="halalOnly">Halal only</label>
-            </div>
-          </div>
-          <div class="metaRow">
-            <div id="meta" class="meta">Loading directory...</div>
-            <button id="copyLinkBtn" class="copyLinkBtn" type="button">Copy link to this view</button>
-          </div>
-        </section>
-        <div class="sidebarScroll">
-          <section id="directory" class="grid" aria-label="International food shop directory"></section>
-          <div id="status" class="status" hidden></div>
+      <section class="hero">
+        <div class="heroInner">
+          <div class="eyebrow">Community Connectors</div>
+          <h1>Find international food <span class="scriptAccent">near you</span></h1>
+          <p class="intro">
+            A directory of international, halal and speciality food shops near the University of Lincoln's
+            Brayford Pool campus. Browse everything below, filter by type, and tap a shop to get directions.
+          </p>
         </div>
-      </aside>
+        <div class="controls">
+          <select id="categoryFilter" aria-label="Filter by type">
+            <option value="">All types</option>
+          </select>
+          <div class="checkField">
+            <input type="checkbox" id="halalOnly" />
+            <label for="halalOnly">Halal only</label>
+          </div>
+        </div>
+        <div class="metaRow">
+          <div id="meta" class="meta">Loading directory...</div>
+          <button id="copyLinkBtn" class="copyLinkBtn" type="button">Copy link to this view</button>
+        </div>
+      </section>
       <div class="mapCol">
         <div id="map"></div>
+      </div>
+      <div class="cardsCol">
+        <section id="directory" class="grid" aria-label="International food shop directory"></section>
+        <div id="status" class="status" hidden></div>
       </div>
     </div>
   </main>
