@@ -199,11 +199,19 @@
       line-height: 1.5;
       font-weight: 400;
     }
+    /* The hero now sits in a fixed ~360-420px sidebar column rather than
+       spanning the full page, so the search controls need to stack rather
+       than squeeze four fields into one row. Postcode gets its own full-width
+       row, radius and type share a row, and Search runs full-width beneath. */
     .controls{
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: 1.4fr .8fr .8fr auto;
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "postcode postcode"
+        "radius category"
+        "search search";
       gap: 10px;
       margin-top: 14px;
       padding: 10px;
@@ -212,6 +220,10 @@
       border: 1px solid rgba(255,255,255,.22);
       backdrop-filter: blur(8px);
     }
+    #postcode{ grid-area: postcode; }
+    #radius{ grid-area: radius; }
+    #categoryFilter{ grid-area: category; }
+    #searchBtn{ grid-area: search; }
     input, select, button{
       width: 100%;
       min-height: 40px;
@@ -452,7 +464,6 @@
       .cardsCol{ order: 3; overflow-y: visible; padding-right: 0; }
       .mapCol{ order: 2; height: 420px; }
       .hero{ order: 1; }
-      .controls{ grid-template-columns: 1fr 1fr; }
       .grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
       h1{ max-width: 100%; }
     }
@@ -466,7 +477,14 @@
       }
       .metaRow{ flex-direction: column; align-items: stretch; }
       .copyLinkBtn{ width: 100%; }
-      .controls{ grid-template-columns: 1fr; }
+      .controls{
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "postcode"
+          "radius"
+          "category"
+          "search";
+      }
       .grid{ grid-template-columns: 1fr; }
       .mapCol{ height: 300px; }
     }
